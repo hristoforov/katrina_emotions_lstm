@@ -61,15 +61,15 @@ def evaluate_model(model, test_data):
         raw_emotion = analyze(model, row['text'])
         predicted_emotion = cleanup(raw_emotion)
         print(f"Text: {row['text']}")
-        print(f"True emotion: {row['emotion']}")
 
         if predicted_emotion != "Unknown":
             predictions.append(predicted_emotion)
-
+            print(f"True: {row['emotion']} , Predicted : {predicted_emotion}\n")
         else:
             skipped = skipped + 1
+            print(f"True: {row['emotion']} , Predicted : {raw_emotion}\n")
 
-        print(f"True: {row['emotion']} , Predicted : {raw_emotion}\n")
+
 
 
     # Print classification report
