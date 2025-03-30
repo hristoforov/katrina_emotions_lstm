@@ -45,7 +45,7 @@ def analyze(model, text):
     """
 
     response = model(prompt, max_tokens=100, stop=["<|start_header_id|>"])
-    return cleanup(response["choices"][0]["text"].strip().lower())
+    return response["choices"][0]["text"].strip().lower()
 
 
 
@@ -55,16 +55,22 @@ def evaluate_model(model, test_data):
     true_labels = []
 
     print("\nEvaluating model...\n")
-
+    skipped = 0
     for _, row in test_data.iterrows():
+
+        raw_emotion = analyze(model, row['text'])
+        predicted_emotion = cleanup(raw_emotion)
         print(f"Text: {row['text']}")
         print(f"True emotion: {row['emotion']}")
 
-        predicted_emotion = analyze(model, row['text'])
-        predictions.append(predicted_emotion)
-        true_labels.append(row['emotion'])
+        if predicted_emotion != "Unknown":
+            predictions.append(predicted_emotion)
 
-        print(f"Predicted emotion: {predicted_emotion}\n")
+        else:
+            skipped = skipped + 1
+
+        print(f"True: {row['emotion']} , Predicted : {raw_emotion}\n")
+
 
     # Print classification report
     print("\nClassification Report:")
@@ -73,6 +79,7 @@ def evaluate_model(model, test_data):
     # Print confusion matrix
     print("\nConfusion Matrix:")
     print(confusion_matrix(true_labels, predictions))
+    print("\nSkipped "+skipped)
 def main():
     # Load data
     print("Loading data...")
