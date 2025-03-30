@@ -83,7 +83,7 @@ def main():
     model = setup_model()
 
     # Use more samples for testing (50 samples)
-    test_data = df.head(50)  # Use first 50 samples after shuffling
+    test_data = df #.head(50)  # Use first 50 samples after shuffling
     evaluate_model(model, test_data)
 
 if __name__ == "__main__":
