@@ -10,10 +10,11 @@ import seaborn as sns
 import tensorflow as tf
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, accuracy_score
+import os
 
 ## 2. Loading the Dataset
 
@@ -35,6 +36,10 @@ print(df_test['label'].value_counts())
 # Tokenization
 tokenizer = Tokenizer(num_words=10000, oov_token='<OOV>')
 tokenizer.fit_on_texts(df['text'])
+
+# Save the tokenizer for future use
+with open('tokenizer.json', 'w') as f:
+    f.write(tokenizer.to_json())
 
 # Convert text to sequences
 X_train = tokenizer.texts_to_sequences(df['text'])
@@ -67,15 +72,26 @@ model = Sequential([
 model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 model.summary()
 
-## 5. Training the Model
+## 5. Training the Model (Only if model doesn't already exist)
 
-history = model.fit(
-    X_train, y_train,
-    validation_split=0.2,
-    epochs=10,
-    batch_size=64,
-    verbose=1
-)
+model_path = 'emotion_model.h5'
+
+if not os.path.exists(model_path):
+    history = model.fit(
+        X_train, y_train,
+        validation_split=0.2,
+        epochs=10,
+        batch_size=64,
+        verbose=1
+    )
+    # Save the trained model
+    model.save(model_path)
+    print('Model saved to disk.')
+
+else:
+    # Load the saved model
+    model = load_model(model_path)
+    print('Loaded model from disk.')
 
 ## 6. Evaluating the Model
 
@@ -89,6 +105,10 @@ print(classification_report(y_test, y_pred, target_names=list(label_to_index.key
 ## 7. Making Predictions
 
 def predict_emotion(text):
+    # Load tokenizer
+    with open('tokenizer.json', 'r') as f:
+        tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(f.read())
+
     sequence = tokenizer.texts_to_sequences([text])
     padded_sequence = pad_sequences(sequence, maxlen=max_length, padding='post')
     prediction = np.argmax(model.predict(padded_sequence), axis=1)[0]
